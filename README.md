@@ -17,7 +17,15 @@ O projeto permite consultar **CEP único** ou **vários CEPs via planilha Excel*
 - Interface web interativa via **Streamlit**.
 
 ---
+## 🌐 Acesse online
 
+Você pode usar o app diretamente pelo navegador, sem instalar nada:
+
+[![Abrir no Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://buscacep-schusban.streamlit.app/)
+
+> Dica: na primeira abertura o carregamento pode levar alguns segundos enquanto o servidor inicializa.
+
+---
 ## 📦 Pré-requisitos
 
 - Python 3.8 ou superior
