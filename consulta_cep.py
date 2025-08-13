@@ -87,22 +87,42 @@ def processar_cep_unico(cep):
     else:
         return None
 
-# -------------------- Interface Streamlit --------------------
-# -------------------- Planilha modelo para o usuário --------------------
-st.subheader("📄 Baixar planilha modelo")
+# -------------------- Interface Streamlit  --------------------
+st.set_page_config(page_title="Consulta de Endereços por CEP", layout="wide")
 
-# Cria um DataFrame com duas linhas de exemplo
+# -------------------- Título --------------------
+st.title("📍 Consulta de Endereços por CEP")
+st.markdown("""
+Bem-vindo ao sistema de consulta de endereços por CEP.
+
+**O que você pode fazer aqui:**
+1. 🔎 Consultar **um CEP específico** digitando-o no campo de busca.
+2. 📂 Consultar **vários CEPs de uma vez** carregando uma planilha Excel.
+
+**Formato exigido para a planilha:**
+- Nome da aba: `CEP`
+- Coluna obrigatória: `CEP`
+- CEPs podem estar com ou sem traço (`-`).
+
+---
+
+""")
+
+# -------------------- Planilha modelo --------------------
+st.subheader("📄 Baixar planilha modelo")
+st.markdown("Caso não tenha a planilha no formato correto, baixe o modelo abaixo e preencha com seus CEPs.")
+
+# Criar exemplo de planilha modelo
 df_modelo = pd.DataFrame({
-    'CEP': ['01001-000', '20040-020']  # exemplos válidos de CEP com ou sem traço
+    'CEP': ['01001-000', '20040-020']  # exemplos
 })
 
-# Cria o arquivo Excel em memória
 output_modelo = BytesIO()
 with pd.ExcelWriter(output_modelo, engine='openpyxl') as writer:
     df_modelo.to_excel(writer, sheet_name='CEP', index=False)
 modelo_bytes = output_modelo.getvalue()
 
-# Botão de download
+# Botão de download do modelo
 st.download_button(
     label="📥 Baixar planilha modelo",
     data=modelo_bytes,
@@ -110,26 +130,11 @@ st.download_button(
     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 )
 
+st.markdown("---")
 
-st.set_page_config(page_title="Consulta de Endereços por CEP", layout="wide")
-st.title("📍 Busque endereços pelo número do CEP")
-
-st.markdown("""
-Bem-vindo ao sistema de consulta de endereços por CEP.
-
-**Funcionalidades:**
-1. Busque endereços individualmente pelo número do CEP.
-2. Ou carregue uma planilha Excel contendo vários CEPs.
-
-**Formato da planilha Excel:**
-- Aba: `CEP`
-- Coluna obrigatória: `CEP`
-- Os CEPs podem conter ou não o traço (`-`)
-""")
-
-# Consulta individual de CEP
+# -------------------- Consulta de CEP único --------------------
 st.subheader("🔎 Consultar CEP único")
-cep_input = st.text_input("Digite um CEP para consulta:")
+cep_input = st.text_input("Digite um CEP para consulta (com ou sem traço):")
 
 if st.button("Consultar CEP"):
     if cep_input:
@@ -138,32 +143,34 @@ if st.button("Consultar CEP"):
             st.success("Endereço encontrado:")
             st.dataframe(df_cep.reset_index(drop=True))
         else:
-            st.warning("CEP não encontrado ou inválido.")
+            st.warning("❌ CEP não encontrado ou inválido.")
     else:
-        st.warning("Digite um CEP válido.")
+        st.warning("⚠️ Digite um CEP válido antes de consultar.")
 
 st.markdown("---")
-st.subheader("📂 Consultar CEPs via planilha Excel")
 
+# -------------------- Consulta via planilha --------------------
+st.subheader("📂 Consultar vários CEPs via planilha Excel")
 uploaded_file = st.file_uploader(
-    "Carregue sua planilha (.xlsx) com a aba 'CEP'", type=["xlsx"]
+    "Carregue sua planilha (.xlsx) no formato indicado acima", 
+    type=["xlsx"]
 )
 
 if uploaded_file:
     df_encontrados, df_invalidos = processar_planilha(uploaded_file)
 
     if not df_encontrados.empty or not df_invalidos.empty:
-        st.success("Consulta concluída!")
+        st.success("✅ Consulta concluída!")
 
         if not df_encontrados.empty:
-            st.subheader("✅ CEPs encontrados")
+            st.subheader("📍 CEPs encontrados")
             st.dataframe(df_encontrados.reset_index(drop=True))
 
         if not df_invalidos.empty:
-            st.subheader("❌ CEPs inválidos")
+            st.subheader("⚠️ CEPs inválidos")
             st.dataframe(df_invalidos.reset_index(drop=True))
 
-        # Salvar em Excel com duas abas sem índice
+        # Criar planilha de resultados com duas abas
         output = BytesIO()
         with pd.ExcelWriter(output, engine='openpyxl') as writer:
             if not df_encontrados.empty:
@@ -172,6 +179,7 @@ if uploaded_file:
                 df_invalidos.to_excel(writer, sheet_name='CEPs inválidos', index=False)
         processed_data = output.getvalue()
 
+        # Botão para baixar resultados
         st.download_button(
             label="📥 Baixar planilha com resultados",
             data=processed_data,
@@ -179,4 +187,4 @@ if uploaded_file:
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
     else:
-        st.warning("Nenhum CEP encontrado. Verifique os dados na planilha.")
+        st.warning("⚠️ Nenhum CEP válido foi encontrado. Verifique sua planilha.")
